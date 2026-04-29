@@ -76,7 +76,20 @@ async function runChecks() {
       return;
     }
     // Run all pings in parallel, don't let one failure stop others
-    await Promise.allSettled(monitors.map(pingMonitor));
+
+    const now = Date.now();
+    const dueMonitors = monitors.filter((monitor) => {
+      const lastChecked = monitor.lastChecked ? new Date(monitor.lastChecked).getTime() : 0;
+      const intervalMs = (monitor.interval || 10) * 60 * 1000;
+      return now - lastChecked >= intervalMs;
+    });
+
+    if (dueMonitors.length === 0) {
+      console.log('[worker] No monitors due for check.');
+      return;
+    }
+
+    await Promise.allSettled(dueMonitors.map(pingMonitor));
   } catch (err) {
     console.error('[worker] Error fetching monitors:', err.message);
   }
@@ -92,7 +105,6 @@ async function main() {
   await runChecks();
 
   // Then run every 10 minutes (Phase 2: make this per-monitor interval)
-  // Note: interval-based scheduling per monitor is a Phase 2 improvement
   // cron.schedule('*/10 * * * *', async () => {
   cron.schedule('* * * * *', async () => {
 

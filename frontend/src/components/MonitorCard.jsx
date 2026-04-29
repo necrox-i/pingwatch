@@ -20,12 +20,12 @@ export default function MonitorCard({ monitor, onDelete, onToggle }) {
     axios
       .get(`/api/logs/${monitor._id}/uptime`)
       .then((r) => setUptime(r.data.uptime))
-      .catch(() => {});
+      .catch(() => { });
 
     axios
       .get(`/api/logs/${monitor._id}`)
       .then((r) => setLogs(r.data.slice(0, 24)))
-      .catch(() => {});
+      .catch(() => { });
   }, [monitor._id, monitor.lastChecked]);
 
   const lastChecked = monitor.lastChecked
@@ -38,18 +38,18 @@ export default function MonitorCard({ monitor, onDelete, onToggle }) {
 
   return (
     <div
-      className={`border rounded-xl px-5 py-4 transition-opacity ${
-        monitor.active
+      className={`border rounded-xl px-5 py-4 transition-opacity ${monitor.active
           ? 'border-gray-800 bg-gray-900'
           : 'border-gray-800 bg-gray-900 opacity-40'
-      }`}
+        }`}
     >
       <div className="flex items-center gap-4">
         {/* Status + name */}
         <StatusDot status={monitor.currentStatus} />
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm truncate">{monitor.name}</p>
+          <p className="font-medium text-md truncate">{monitor.name}</p>
           <p className="text-xs text-gray-500 truncate">{monitor.url}</p>
+          <span className="text-xs text-gray-600 font-mono">every {monitor.interval}m</span>
         </div>
 
         {/* Stats — hidden on small screens */}
@@ -81,9 +81,8 @@ export default function MonitorCard({ monitor, onDelete, onToggle }) {
           {logs.map((log, i) => (
             <div
               key={i}
-              className={`w-1.5 rounded-sm transition-all ${
-                log.status === 'up' ? 'bg-green-500' : 'bg-red-500'
-              }`}
+              className={`w-1.5 rounded-sm transition-all ${log.status === 'up' ? 'bg-green-500' : 'bg-red-500'
+                }`}
               style={{
                 height: log.status === 'up'
                   ? `${Math.min(100, Math.max(30, 100 - (log.responseTime / 20)))}%`
