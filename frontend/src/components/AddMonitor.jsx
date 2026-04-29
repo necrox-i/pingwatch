@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const MONITOR_LIMIT = 5;
+const MONITOR_LIMIT = 10;
 
 export default function AddMonitor({ onAdd, monitorCount = 0 }) {
   const [name, setName] = useState('');
