@@ -17,12 +17,12 @@ export default function MonitorCard({ monitor, onDelete, onToggle }) {
   const [logs, setLogs] = useState([]);
 
   useEffect(() => {
-    axios
+    api
       .get(`/api/logs/${monitor._id}/uptime`)
       .then((r) => setUptime(r.data.uptime))
       .catch(() => { });
 
-    axios
+    api
       .get(`/api/logs/${monitor._id}`)
       .then((r) => setLogs(r.data.slice(0, 24)))
       .catch(() => { });

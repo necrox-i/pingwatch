@@ -15,7 +15,7 @@ export default function App() {
 
   const fetchMonitors = useCallback(async () => {
     try {
-      const res = await axios.get('/api/monitors', { withCredentials: true });
+      const res = await api.get('/api/monitors');
       setMonitors(res.data);
       setError(null);
     } catch {
@@ -33,17 +33,17 @@ export default function App() {
   }, [fetchMonitors, user]);
 
   const handleAdd = async ({ name, url, interval }) => {
-    await axios.post('/api/monitors', { name, url, interval }, { withCredentials: true });
+    await api.post('/api/monitors', { name, url, interval });
     fetchMonitors();
   };
 
   const handleDelete = async (id) => {
-    await axios.delete(`/api/monitors/${id}`, { withCredentials: true });
+    await api.delete(`/api/monitors/${id}`);
     setMonitors((prev) => prev.filter((m) => m._id !== id));
   };
 
   const handleToggle = async (id) => {
-    await axios.patch(`/api/monitors/${id}/toggle`, {}, { withCredentials: true });
+    await api.patch(`/api/monitors/${id}/toggle`, {});
     fetchMonitors();
   };
 

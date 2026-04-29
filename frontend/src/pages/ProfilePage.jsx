@@ -8,8 +8,8 @@ export default function ProfilePage({ onClose }) {
   const LIMIT = 5;
 
   useEffect(() => {
-    axios
-      .get('/api/monitors', { withCredentials: true })
+    api
+      .get('/api/monitors')
       .then((r) => setMonitorCount(r.data.length))
       .catch(() => {});
   }, []);
