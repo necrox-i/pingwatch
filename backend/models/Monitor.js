@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 
 const monitorSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
     name: { type: String, required: true, trim: true },
     url:  { type: String, required: true, trim: true },
     interval: { type: Number, default: 5 }, // minutes
@@ -15,5 +20,8 @@ const monitorSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Fast per-user queries
+monitorSchema.index({ userId: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Monitor', monitorSchema);

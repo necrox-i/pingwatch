@@ -2,6 +2,8 @@ services:
   frontend:
     build: ./frontend
     container_name: frontend_app
+    environment:
+      - VITE_PROXY_TARGET=http://backend:5000
     ports:
       - "3000:3000"
     depends_on:
@@ -15,7 +17,14 @@ services:
     ports:
       - "5000:5000"
     environment:
-      MONGO_URI: ${MONGO_URI}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - MONGO_URI=${MONGO_URI}
+      - CLIENT_URL=http://localhost:3000
+      # SERVER_URL must match the callback URL registered in Google Cloud Console
+      - SERVER_URL=http://localhost:5000
+      # - NODE_ENV=production
     networks:
       - app-network
 
@@ -23,7 +32,7 @@ services:
     build: ./worker
     container_name: worker_app
     environment:
-      MONGO_URI: ${MONGO_URI}
+      - MONGO_URI=${MONGO_URI}
     networks:
       - app-network
 

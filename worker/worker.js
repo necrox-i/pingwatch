@@ -3,8 +3,8 @@ const axios = require('axios');
 const cron = require('node-cron');
 const mongoose = require('mongoose');
 
-// Schemas defined inline — worker is a standalone service
 const monitorSchema = new mongoose.Schema({
+  userId: mongoose.Schema.Types.ObjectId,
   name: String,
   url: String,
   interval: Number,
@@ -14,12 +14,13 @@ const monitorSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const statusLogSchema = new mongoose.Schema({
-  monitorId: mongoose.Schema.Types.ObjectId,
-  status: String,
+  monitorId:    { type: mongoose.Schema.Types.ObjectId, required: true },
+  userId:       { type: mongoose.Schema.Types.ObjectId, required: true },
+  status:       String,
   responseTime: Number,
-  statusCode: Number,
-  error: String,
-  checkedAt: { type: Date, default: Date.now },
+  statusCode:   Number,
+  error:        String,
+  checkedAt:    { type: Date, default: Date.now },
 });
 
 const Monitor = mongoose.model('Monitor', monitorSchema);
@@ -45,29 +46,31 @@ async function pingMonitor(monitor) {
     status = 'down';
   }
 
-  // Save result to log
-  await StatusLog.create({ monitorId: monitor._id, status, responseTime, statusCode, error });
+  await StatusLog.create({
+    monitorId: monitor._id,
+    userId: monitor.userId,
+    status,
+    responseTime,
+    statusCode,
+    error,
+  });
 
-  // Detect status change (for alerting)
   const previousStatus = monitor.currentStatus;
 
-  // Update monitor document
   await Monitor.findByIdAndUpdate(monitor._id, {
     currentStatus: status,
     lastChecked: new Date(),
   });
 
   const symbol = status === 'up' ? '✓' : '✗';
-  console.log(`${symbol} [${new Date().toISOString()}] ${monitor.name} → ${status} (${responseTime}ms)`);
+  console.log(`${symbol} [${new Date().toISOString()}] ${monitor.name} -> ${status} (${responseTime}ms)`);
 
-  // Alert on status change — Phase 9: replace this with Telegram/email
   if (previousStatus !== 'pending' && previousStatus !== status) {
-    console.log(`⚠️  ALERT: "${monitor.name}" flipped ${previousStatus} → ${status}`);
-    // TODO: sendTelegramAlert(monitor, status);
+    console.log(`ALERT: "${monitor.name}" flipped ${previousStatus} -> ${status}`);
   }
 }
 
-// ─── Run all due checks ───────────────────────────────────────────────────────
+// ─── Scheduled checks ────────────────────────────────────────────────────────
 async function runChecks() {
   try {
     const monitors = await Monitor.find({ active: true });
@@ -75,7 +78,6 @@ async function runChecks() {
       console.log('[worker] No active monitors.');
       return;
     }
-    // Run all pings in parallel, don't let one failure stop others
 
     const now = Date.now();
     const dueMonitors = monitors.filter((monitor) => {
@@ -95,24 +97,48 @@ async function runChecks() {
   }
 }
 
+// ─── Change stream: instant ping on new monitor insert ───────────────────────
+function watchNewMonitors() {
+  const changeStream = Monitor.watch(
+    [{ $match: { operationType: 'insert' } }],
+    { fullDocument: 'updateLookup' }
+  );
+
+  changeStream.on('change', async (event) => {
+    const monitor = event.fullDocument;
+    if (!monitor || !monitor.active) return;
+    console.log(`[worker] New monitor detected: "${monitor.name}" — pinging immediately`);
+    try {
+      await pingMonitor(monitor);
+    } catch (err) {
+      console.error(`[worker] Immediate ping failed for "${monitor.name}":`, err.message);
+    }
+  });
+
+  changeStream.on('error', (err) => {
+    console.error('[worker] Change stream error:', err.message);
+    setTimeout(watchNewMonitors, 5000);
+  });
+
+  console.log('[worker] Watching for new monitors...');
+}
+
 // ─── Bootstrap ───────────────────────────────────────────────────────────────
 async function main() {
   await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/pingwatch');
   console.log('[worker] Connected to MongoDB');
 
-  // Run immediately on startup so you see results right away
   console.log('[worker] Running initial check...');
   await runChecks();
 
-  // Then run every 10 minutes (Phase 2: make this per-monitor interval)
-  // cron.schedule('*/10 * * * *', async () => {
-  cron.schedule('* * * * *', async () => {
+  watchNewMonitors();
 
+  cron.schedule('* * * * *', async () => {
     console.log('[worker] Running scheduled check...');
     await runChecks();
   });
 
-  console.log('[worker] Scheduler started. Checking every 10 minutes.');
+  console.log('[worker] Scheduler started.');
 }
 
 main().catch((err) => {

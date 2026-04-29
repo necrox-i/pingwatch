@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 
 const statusLogSchema = new mongoose.Schema({
-  monitorId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Monitor', required: true },
+  monitorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Monitor', required: true },
+  userId:    { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   status:       { type: String, enum: ['up', 'down'], required: true },
   responseTime: { type: Number, default: null }, // ms
   statusCode:   { type: Number, default: null },
@@ -9,11 +10,11 @@ const statusLogSchema = new mongoose.Schema({
   checkedAt:    { type: Date, default: Date.now },
 });
 
-// Index for fast per-monitor queries sorted by time
 statusLogSchema.index({ monitorId: 1, checkedAt: -1 });
+statusLogSchema.index({ userId: 1, checkedAt: -1 });
 statusLogSchema.index(
   { checkedAt: 1 },
-  { expireAfterSeconds: 7 * 24 * 60 * 60 } // 7 days
+  { expireAfterSeconds: 7 * 24 * 60 * 60 } // 7-day TTL
 );
 
 module.exports = mongoose.model('StatusLog', statusLogSchema);
