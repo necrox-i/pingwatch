@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../api';
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -8,7 +9,7 @@ export function AuthProvider({ children }) {
 
   const fetchMe = useCallback(async () => {
     try {
-      const res = await axios.get('/auth/me', { withCredentials: true });
+      const res = await api.get('/auth/me');
       setUser(res.data);
     } catch {
       setUser(null);
@@ -22,11 +23,11 @@ export function AuthProvider({ children }) {
   }, [fetchMe]);
 
   const login = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google/callback`; // Redirect to backend for Google OAuth
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
   };
 
   const logout = async () => {
-    await axios.get('/auth/logout', { withCredentials: true });
+    await api.get('/auth/logout');
     setUser(null);
   };
 
