@@ -111,7 +111,7 @@ module.exports = async function startWorker() {
 
   watchNewMonitors();
 
-  cron.schedule('* * * * *', async () => {
+  cron.schedule('*/10 * * * *', async () => {
     console.log('[worker] Running scheduled check...');
     await runChecks();
   });
