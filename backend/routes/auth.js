@@ -1,5 +1,7 @@
 const router = require('express').Router();
 const passport = require('passport');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
 // Kick off Google OAuth flow
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
