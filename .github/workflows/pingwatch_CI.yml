@@ -27,13 +27,6 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/pingwatch-backend:${{ github.sha }}
       
-      - name: Build and push worker docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./worker
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/pingwatch-worker:${{ github.sha }}
-      
       - name: Build and push frontend docker image
         uses: docker/build-push-action@v5
         with:
