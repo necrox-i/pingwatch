@@ -2,8 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const session = require('express-session');
-const MongoStore = require('connect-mongo');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const User = require('./models/User');
@@ -28,25 +26,6 @@ app.use(
 );
 
 app.use(express.json());
-
-// Session
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'changeme',
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/pingwatch',
-      ttl: 7 * 24 * 60 * 60,
-    }),
-    cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    },
-  })
-);
 
 // Passport
 passport.use(
@@ -75,18 +54,8 @@ passport.use(
   )
 );
 
-passport.serializeUser((user, done) => done(null, user._id));
-passport.deserializeUser(async (id, done) => {
-  try {
-    const user = await User.findById(id);
-    done(null, user);
-  } catch (err) {
-    done(err);
-  }
-});
 
 app.use(passport.initialize());
-app.use(passport.session());
 
 // Routes
 app.use('/auth', authRouter);

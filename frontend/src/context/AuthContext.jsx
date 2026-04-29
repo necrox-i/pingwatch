@@ -19,6 +19,14 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    // Check if Google just redirected back with a token
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if (token) {
+      localStorage.setItem('token', token);
+      // Clean token from URL
+      window.history.replaceState({}, '', '/');
+    }
     fetchMe();
   }, [fetchMe]);
 
@@ -27,7 +35,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    await api.get('/auth/logout');
+    localStorage.removeItem('token');
     setUser(null);
   };
 
