@@ -7,7 +7,7 @@ const MongoStore = require('connect-mongo');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const User = require('./models/User');
-
+const startWorker = require('./worker');
 const monitorsRouter = require('./routes/monitors');
 const logsRouter = require('./routes/logs');
 const authRouter = require('./routes/auth');
@@ -15,7 +15,7 @@ const authRouter = require('./routes/auth');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS - credentials: true required for session cookies
+// CORS
 app.use(
   cors({
     origin: process.env.CLIENT_URL || 'http://localhost:3000',
@@ -38,14 +38,13 @@ app.use(
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      // secure: false, // Set to true in production with HTTPS
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   })
 );
 
-// Passport - Google OAuth
+// Passport
 passport.use(
   new GoogleStrategy(
     {
@@ -95,13 +94,15 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });
 });
 
+// Connect to MongoDB, then start server + worker
 mongoose
   .connect(process.env.MONGO_URI || 'mongodb://localhost:27017/pingwatch')
   .then(() => {
-    console.log('Connected to MongoDB');
-    app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
+    console.log('[server] Connected to MongoDB');
+    app.listen(PORT, () => console.log(`[server] Backend running on port ${PORT}`));
+    startWorker();
   })
   .catch((err) => {
-    console.error('MongoDB connection failed:', err.message);
+    console.error('[server] MongoDB connection failed:', err.message);
     process.exit(1);
   });

@@ -28,14 +28,6 @@ services:
     networks:
       - app-network
 
-  worker:
-    build: ./worker
-    container_name: worker_app
-    environment:
-      - MONGO_URI=${MONGO_URI}
-    networks:
-      - app-network
-
 networks:
   app-network:
     driver: bridge

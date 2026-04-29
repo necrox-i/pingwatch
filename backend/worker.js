@@ -1,32 +1,8 @@
-require('dotenv').config();
 const axios = require('axios');
 const cron = require('node-cron');
-const mongoose = require('mongoose');
+const Monitor = require('./models/Monitor');
+const StatusLog = require('./models/StatusLog');
 
-const monitorSchema = new mongoose.Schema({
-  userId: mongoose.Schema.Types.ObjectId,
-  name: String,
-  url: String,
-  interval: Number,
-  active: Boolean,
-  currentStatus: String,
-  lastChecked: Date,
-}, { timestamps: true });
-
-const statusLogSchema = new mongoose.Schema({
-  monitorId:    { type: mongoose.Schema.Types.ObjectId, required: true },
-  userId:       { type: mongoose.Schema.Types.ObjectId, required: true },
-  status:       String,
-  responseTime: Number,
-  statusCode:   Number,
-  error:        String,
-  checkedAt:    { type: Date, default: Date.now },
-});
-
-const Monitor = mongoose.model('Monitor', monitorSchema);
-const StatusLog = mongoose.model('StatusLog', statusLogSchema);
-
-// ─── Ping a single monitor ────────────────────────────────────────────────────
 async function pingMonitor(monitor) {
   const start = Date.now();
   let status = 'down';
@@ -70,7 +46,6 @@ async function pingMonitor(monitor) {
   }
 }
 
-// ─── Scheduled checks ────────────────────────────────────────────────────────
 async function runChecks() {
   try {
     const monitors = await Monitor.find({ active: true });
@@ -97,7 +72,6 @@ async function runChecks() {
   }
 }
 
-// ─── Change stream: instant ping on new monitor insert ───────────────────────
 function watchNewMonitors() {
   const changeStream = Monitor.watch(
     [{ $match: { operationType: 'insert' } }],
@@ -123,11 +97,15 @@ function watchNewMonitors() {
   console.log('[worker] Watching for new monitors...');
 }
 
-// ─── Bootstrap ───────────────────────────────────────────────────────────────
-async function main() {
-  await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/pingwatch');
-  console.log('[worker] Connected to MongoDB');
+function keepAlive() {
+  const url = process.env.SERVER_URL;
+  if (!url) return;
+  cron.schedule('*/10 * * * *', async () => {
+    try { await axios.get(`${url}/health`); } catch {}
+  });
+}
 
+module.exports = async function startWorker() {
   console.log('[worker] Running initial check...');
   await runChecks();
 
@@ -138,10 +116,6 @@ async function main() {
     await runChecks();
   });
 
+  keepAlive();
   console.log('[worker] Scheduler started.');
-}
-
-main().catch((err) => {
-  console.error('[worker] Fatal error:', err.message);
-  process.exit(1);
-});
+};
