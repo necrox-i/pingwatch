@@ -13,6 +13,9 @@ const logsRouter = require('./routes/logs');
 const authRouter = require('./routes/auth');
 
 const app = express();
+
+app.set('trust proxy', true); // Trust first proxy for secure cookies in production
+
 const PORT = process.env.PORT || 5000;
 
 
@@ -25,7 +28,6 @@ app.use(
 );
 
 app.use(express.json());
-app.set('trust proxy', 1); // Trust first proxy for secure cookies in production
 
 // Session
 app.use(
