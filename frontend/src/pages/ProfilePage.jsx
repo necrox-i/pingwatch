@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 export default function ProfilePage({ onClose }) {
   const { user, logout } = useAuth();
   const [monitorCount, setMonitorCount] = useState(null);
-  const LIMIT = 5;
+  const LIMIT = 10;
 
   useEffect(() => {
     api

@@ -3,7 +3,7 @@ const Monitor = require('../models/Monitor');
 const StatusLog = require('../models/StatusLog');
 const isAuth = require('../middleware/isAuth');
 
-const MONITOR_LIMIT = 5;
+const MONITOR_LIMIT = 10;
 
 // All routes require auth
 router.use(isAuth);
