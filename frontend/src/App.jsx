@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import api from './api';
 import { useAuth } from './context/AuthContext';
 import MonitorCard from './components/MonitorCard';
 import AddMonitor from './components/AddMonitor';

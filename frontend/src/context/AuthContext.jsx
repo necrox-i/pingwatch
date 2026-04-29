@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
-
+import api from '../api';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
