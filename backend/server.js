@@ -4,6 +4,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+
 const User = require('./models/User');
 const startWorker = require('./worker');
 const monitorsRouter = require('./routes/monitors');
@@ -11,68 +12,105 @@ const logsRouter = require('./routes/logs');
 const authRouter = require('./routes/auth');
 
 const app = express();
-
-app.set('trust proxy', true); // Trust first proxy for secure cookies in production
-
 const PORT = process.env.PORT || 5000;
 
+// ─── Trust proxy (must be first) ─────────────────────────────────────────────
+app.set('trust proxy', true);
 
-// CORS
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
-    credentials: true,
-  })
-);
+// ─── CORS ────────────────────────────────────────────────────────────────────
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  credentials: true,
+}));
 
-app.use(express.json());
+// ─── Body parsing ─────────────────────────────────────────────────────────────
+app.use(express.json({ limit: '10kb' })); // reject oversized payloads
 
-// Passport
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: `${process.env.SERVER_URL || 'http://localhost:5000'}/auth/google/callback`,
-    },
-    async (_accessToken, _refreshToken, profile, done) => {
-      try {
-        let user = await User.findOne({ googleId: profile.id });
-        if (!user) {
-          user = await User.create({
-            googleId: profile.id,
-            email: profile.emails[0].value,
-            name: profile.displayName,
-            avatar: profile.photos?.[0]?.value || null,
-          });
-        }
-        return done(null, user);
-      } catch (err) {
-        return done(err);
+// ─── Request timeout — drop hung requests after 15s ──────────────────────────
+app.use((req, res, next) => {
+  res.setTimeout(15000, () => {
+    res.status(408).json({ error: 'Request timeout' });
+  });
+  next();
+});
+
+// ─── Passport Google OAuth ───────────────────────────────────────────────────
+passport.use(new GoogleStrategy(
+  {
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: `${process.env.SERVER_URL || 'http://localhost:5000'}/auth/google/callback`,
+  },
+  async (_accessToken, _refreshToken, profile, done) => {
+    try {
+      let user = await User.findOne({ googleId: profile.id });
+      if (!user) {
+        user = await User.create({
+          googleId: profile.id,
+          email: profile.emails[0].value,
+          name: profile.displayName,
+          avatar: profile.photos?.[0]?.value || null,
+        });
+        console.log(`[auth] New user created: ${user.email}`);
       }
+      return done(null, user);
+    } catch (err) {
+      return done(err);
     }
-  )
-);
-
+  }
+));
 
 app.use(passport.initialize());
 
-// Routes
+// ─── Routes ──────────────────────────────────────────────────────────────────
 app.use('/auth', authRouter);
 app.use('/api/monitors', monitorsRouter);
 app.use('/api/logs', logsRouter);
 
-// Health check
+// ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', uptime: process.uptime() });
+  res.json({
+    status: 'ok',
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+    db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+  });
 });
 
-// Connect to MongoDB, then start server + worker
+// ─── 404 handler ─────────────────────────────────────────────────────────────
+app.use((req, res) => {
+  res.status(404).json({ error: `Route ${req.method} ${req.path} not found` });
+});
+
+// ─── Global error handler ─────────────────────────────────────────────────────
+app.use((err, req, res, next) => {
+  console.error('[server] Unhandled error:', err.message);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+// ─── Graceful shutdown ────────────────────────────────────────────────────────
+async function shutdown(signal) {
+  console.log(`[server] ${signal} received — shutting down gracefully`);
+  try {
+    await mongoose.connection.close();
+    console.log('[server] MongoDB connection closed');
+    process.exit(0);
+  }
+  catch (err) {
+    console.error('[server] Error during shutdown:', err.message);
+    process.exit(1);
+  }
+  setTimeout(()=> process.exit(1),8000); // force exit if shutdown takes too long
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT',  () => shutdown('SIGINT'));
+
+// ─── Bootstrap ───────────────────────────────────────────────────────────────
 mongoose
   .connect(process.env.MONGO_URI || 'mongodb://localhost:27017/pingwatch')
   .then(() => {
     console.log('[server] Connected to MongoDB');
-    app.listen(PORT, () => console.log(`[server] Backend running on port ${PORT}`));
+    app.listen(PORT, () => console.log(`[server] Running on port ${PORT}`));
     startWorker();
   })
   .catch((err) => {
