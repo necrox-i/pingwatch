@@ -47,10 +47,11 @@ export default function AddMonitor({ onAdd, monitorCount = 0 }) {
   };
 
   const inputBase =
-    "w-full rounded-xl bg-white/[0.04] border border-white/10 px-3 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition disabled:opacity-40";
+    "w-full rounded-xl bg-white/[0.04] border border-white/10 px-3 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition disabled:opacity-40 appearance-none";
 
   return (
     <div className="relative rounded-2xl border border-white/10 bg-white/[0.05] p-4 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.5)] sm:p-6">
+      
       {/* Header */}
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -80,6 +81,7 @@ export default function AddMonitor({ onAdd, monitorCount = 0 }) {
         <>
           {/* FORM */}
           <div className="grid gap-3 sm:grid-cols-2">
+            
             <input
               type="text"
               placeholder="Monitor name (e.g. API Server)"
@@ -97,16 +99,32 @@ export default function AddMonitor({ onAdd, monitorCount = 0 }) {
               className={inputBase}
             />
 
-            <select
-              value={interval}
-              onChange={(e) => setInterval(Number(e.target.value))}
-              className={inputBase}
-            >
-              <option value={1}>1 min interval</option>
-              <option value={5}>5 min interval</option>
-              <option value={10}>10 min interval</option>
-              <option value={30}>30 min interval</option>
-            </select>
+            {/* SELECT WITH CUSTOM ARROW */}
+            <div className="relative">
+              <select
+                value={interval}
+                onChange={(e) => setInterval(Number(e.target.value))}
+                className={`${inputBase} pr-10`}
+              >
+                <option className="bg-[#03040a] text-white" value={1}>
+                  1 min interval
+                </option>
+                <option className="bg-[#03040a] text-white" value={5}>
+                  5 min interval
+                </option>
+                <option className="bg-[#03040a] text-white" value={10}>
+                  10 min interval
+                </option>
+                <option className="bg-[#03040a] text-white" value={30}>
+                  30 min interval
+                </option>
+              </select>
+
+              {/* Arrow */}
+              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-zinc-400 text-xs">
+                ▼
+              </div>
+            </div>
 
             <motion.button
               whileTap={!loading ? { scale: 0.97 } : {}}
