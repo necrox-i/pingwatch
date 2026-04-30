@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState } from "react";
+import { motion } from "framer-motion";
 
 const MONITOR_LIMIT = 10;
 
 export default function AddMonitor({ onAdd, monitorCount = 0 }) {
-  const [name, setName] = useState('');
-  const [url, setUrl] = useState('');
+  const [name, setName] = useState("");
+  const [url, setUrl] = useState("");
   const [interval, setInterval] = useState(5);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -12,89 +13,128 @@ export default function AddMonitor({ onAdd, monitorCount = 0 }) {
   const atLimit = monitorCount >= MONITOR_LIMIT;
 
   const handleSubmit = async () => {
-    if (atLimit) return;
+    if (loading || atLimit) return;
+
     if (!name.trim() || !url.trim()) {
-      setError('Both name and URL are required.');
+      setError("Both name and URL are required.");
       return;
     }
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      setError('URL must start with http:// or https://');
+
+    if (!/^https?:\/\//i.test(url)) {
+      setError("URL must start with http:// or https://");
       return;
     }
+
     setLoading(true);
     setError(null);
+
     try {
-      await onAdd({ name: name.trim(), url: url.trim(), interval });
-      setName('');
-      setUrl('');
+      await onAdd({
+        name: name.trim(),
+        url: url.trim(),
+        interval,
+      });
+
+      setName("");
+      setUrl("");
       setInterval(5);
     } catch (err) {
       const msg = err?.response?.data?.error;
-      setError(msg || 'Failed to add monitor. Is the backend running?');
+      setError(msg || "Failed to add monitor.");
     } finally {
       setLoading(false);
     }
   };
 
-  const inputClass =
-    'bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gray-500 transition disabled:opacity-40 disabled:cursor-not-allowed';
+  const inputBase =
+    "w-full rounded-xl bg-white/[0.04] border border-white/10 px-3 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition disabled:opacity-40";
 
   return (
-    <div className="border border-gray-800 rounded-xl p-5 bg-gray-900">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-sm font-medium text-gray-400">Add monitor</p>
-        <p className={`text-xs font-mono ${atLimit ? 'text-red-400' : 'text-gray-600'}`}>
-          {monitorCount} / {MONITOR_LIMIT} used
-        </p>
+    <div className="relative rounded-2xl border border-white/10 bg-white/[0.05] p-6 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+      
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h3 className="text-sm font-medium text-white">
+            Add Monitor
+          </h3>
+          <p className="text-xs text-zinc-500 mt-1">
+            Track uptime and receive alerts
+          </p>
+        </div>
+
+        <div className={`text-xs font-mono px-2 py-1 rounded-md border ${
+          atLimit
+            ? "border-red-500/40 text-red-400"
+            : "border-white/10 text-zinc-400"
+        }`}>
+          {monitorCount} / {MONITOR_LIMIT}
+        </div>
       </div>
 
+      {/* LIMIT STATE */}
       {atLimit ? (
-        <div className="flex items-center gap-3 bg-red-950/30 border border-red-900/50 rounded-lg px-4 py-3">
-          <span className="text-red-400 text-sm">
-            Free plan limit reached. Delete a monitor to add a new one.
-          </span>
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          Free plan limit reached. Remove a monitor to continue.
         </div>
       ) : (
-        <div className="flex flex-col sm:flex-row gap-2">
-          <input
-            type="text"
-            placeholder="Name (e.g. My API)"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={atLimit}
-            className={`flex-1 ${inputClass}`}
-          />
-          <input
-            type="url"
-            placeholder="https://example.com"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            disabled={atLimit}
-            className={`flex-1 ${inputClass}`}
-          />
-          <select
-            value={interval}
-            onChange={(e) => setInterval(Number(e.target.value))}
-            disabled={atLimit}
-            className={inputClass}
-          >
-            <option value={1}>Every 1 min</option>
-            <option value={5}>Every 5 min</option>
-            <option value={10}>Every 10 min</option>
-            <option value={30}>Every 30 min</option>
-          </select>
-          <button
-            onClick={handleSubmit}
-            disabled={loading || atLimit}
-            className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium px-5 py-2 rounded-lg transition"
-          >
-            {loading ? 'Adding...' : 'Add'}
-          </button>
-        </div>
-      )}
+        <>
+          {/* FORM */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            
+            <input
+              type="text"
+              placeholder="Monitor name (e.g. API Server)"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className={inputBase}
+            />
 
-      {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
+            <input
+              type="url"
+              placeholder="https://example.com"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+              className={inputBase}
+            />
+
+            <select
+              value={interval}
+              onChange={(e) => setInterval(Number(e.target.value))}
+              className={inputBase}
+            >
+              <option value={1}>1 min interval</option>
+              <option value={5}>5 min interval</option>
+              <option value={10}>10 min interval</option>
+              <option value={30}>30 min interval</option>
+            </select>
+
+            <motion.button
+              whileTap={!loading ? { scale: 0.97 } : {}}
+              onClick={handleSubmit}
+              disabled={loading}
+              className="rounded-xl bg-white text-black font-medium text-sm px-4 py-2.5 transition hover:bg-zinc-200 disabled:opacity-50"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/40 border-t-transparent" />
+                  Adding...
+                </span>
+              ) : (
+                "Add Monitor"
+              )}
+            </motion.button>
+          </div>
+
+          {/* ERROR */}
+          {error && (
+            <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+              {error}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
