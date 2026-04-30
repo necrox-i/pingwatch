@@ -50,24 +50,23 @@ export default function AddMonitor({ onAdd, monitorCount = 0 }) {
     "w-full rounded-xl bg-white/[0.04] border border-white/10 px-3 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition disabled:opacity-40";
 
   return (
-    <div className="relative rounded-2xl border border-white/10 bg-white/[0.05] p-6 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
-      
+    <div className="relative rounded-2xl border border-white/10 bg-white/[0.05] p-4 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.5)] sm:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-sm font-medium text-white">
-            Add Monitor
-          </h3>
-          <p className="text-xs text-zinc-500 mt-1">
+          <h3 className="text-sm font-medium text-white">Add Monitor</h3>
+          <p className="mt-1 text-xs text-zinc-500">
             Track uptime and receive alerts
           </p>
         </div>
 
-        <div className={`text-xs font-mono px-2 py-1 rounded-md border ${
-          atLimit
-            ? "border-red-500/40 text-red-400"
-            : "border-white/10 text-zinc-400"
-        }`}>
+        <div
+          className={`inline-flex w-fit text-xs font-mono px-2 py-1 rounded-md border ${
+            atLimit
+              ? "border-red-500/40 text-red-400"
+              : "border-white/10 text-zinc-400"
+          }`}
+        >
           {monitorCount} / {MONITOR_LIMIT}
         </div>
       </div>
@@ -81,7 +80,6 @@ export default function AddMonitor({ onAdd, monitorCount = 0 }) {
         <>
           {/* FORM */}
           <div className="grid gap-3 sm:grid-cols-2">
-            
             <input
               type="text"
               placeholder="Monitor name (e.g. API Server)"
@@ -114,7 +112,7 @@ export default function AddMonitor({ onAdd, monitorCount = 0 }) {
               whileTap={!loading ? { scale: 0.97 } : {}}
               onClick={handleSubmit}
               disabled={loading}
-              className="rounded-xl bg-white text-black font-medium text-sm px-4 py-2.5 transition hover:bg-zinc-200 disabled:opacity-50"
+              className="w-full rounded-xl bg-white text-black font-medium text-sm px-4 py-2.5 transition hover:bg-zinc-200 disabled:opacity-50 sm:col-span-2"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">

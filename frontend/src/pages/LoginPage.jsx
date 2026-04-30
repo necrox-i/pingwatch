@@ -17,7 +17,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#03040a] text-white">
+    <div className="relative min-h-dvh overflow-hidden bg-[#03040a] text-white">
       <StyleBlock />
 
       {/* Background */}
@@ -30,9 +30,9 @@ export default function LoginPage() {
       <div className="absolute -bottom-36 left-1/3 h-[26rem] w-[26rem] rounded-full bg-indigo-500/12 blur-[160px]" />
 
       {/* Main Layout */}
-      <div className="relative z-10 grid min-h-screen lg:grid-cols-2">
+      <div className="relative z-10 grid min-h-dvh lg:grid-cols-2">
         {/* Brand Side */}
-        <section className="hidden lg:flex items-center justify-center px-10">
+        <section className="hidden items-center justify-center px-10 lg:flex">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -45,7 +45,7 @@ export default function LoginPage() {
             </div>
 
             <div className="mt-8 flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/8 shadow-[0_0_30px_rgba(255,255,255,0.08)] backdrop-blur-xl">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.08] shadow-[0_0_30px_rgba(255,255,255,0.08)] backdrop-blur-xl">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path
                     d="M4 12h4l2-6 4 12 2-6h4"
@@ -89,16 +89,16 @@ export default function LoginPage() {
         </section>
 
         {/* Login Side */}
-        <section className="flex items-center justify-center px-6 py-10 sm:px-10">
+        <section className="flex items-center justify-center px-4 py-6 sm:px-10 sm:py-10">
           <motion.div
             initial={{ opacity: 0, y: 24, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.55, ease: "easeOut" }}
             className="w-full max-w-md"
           >
-            <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-8 shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur-2xl sm:p-10">
+            <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur-2xl sm:p-10">
               <div className="text-center">
-                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/10 shadow-[0_0_24px_rgba(255,255,255,0.08)]">
+                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.08] shadow-[0_0_24px_rgba(255,255,255,0.08)]">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path
                       d="M4 12h4l2-6 4 12 2-6h4"
