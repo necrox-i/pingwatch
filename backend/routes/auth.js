@@ -3,6 +3,9 @@ const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+const Monitor = require('../models/Monitor');
+const StatusLog = require('../models/StatusLog');
+
 // Kick off Google OAuth flow
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
@@ -47,6 +50,32 @@ router.get('/me', async (req, res) => {
 // Logout
 router.get('/logout', (req, res) => {
   res.json({ message: 'Logged out' });
+});
+
+//delete account
+router.delete('/delete', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: 'No token' });
+  
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+    
+    const monitors = await Monitor.find({ userId });
+    const monitorIds = monitors.map(m => m._id);
+    await StatusLog.deleteMany({ monitorId: { $in: monitorIds } });
+
+    //delete all monitors
+    await Monitor.deleteMany({ userId });
+    //delete user 
+    await User.findByIdAndDelete(userId);
+    
+    res.json({ message: 'Account and associated monitors deleted' });
+  }
+  catch (err) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
 });
 
 module.exports = router;
