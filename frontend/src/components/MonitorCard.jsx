@@ -2,7 +2,10 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import api from "../api";
 
+const normalizeStatus = (s) => (s === "accepted" ? "up" : s);
+
 function StatusDot({ status }) {
+  const normalized = normalizeStatus(status);
   const styles = {
     up: "bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]",
     down: "bg-red-500 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.9)]",
@@ -11,7 +14,7 @@ function StatusDot({ status }) {
 
   return (
     <span
-      className={`inline-block h-2.5 w-2.5 rounded-full ${styles[status] || "bg-zinc-600"}`}
+      className={`inline-block h-2.5 w-2.5 rounded-full ${styles[normalized] || "bg-zinc-600"}`}
     />
   );
 }
@@ -28,7 +31,14 @@ export default function MonitorCard({ monitor, onDelete, onToggle }) {
 
     api
       .get(`/api/logs/${monitor._id}`)
-      .then((r) => setLogs(r.data.slice(0, 24)))
+      .then((r) =>
+        setLogs(
+          r.data.slice(0, 24).map((log) => ({
+            ...log,
+            status: normalizeStatus(log.status),
+          }))
+        )
+      )
       .catch(() => {});
   }, [monitor._id, monitor.lastChecked]);
 
@@ -139,8 +149,6 @@ export default function MonitorCard({ monitor, onDelete, onToggle }) {
     </motion.div>
   );
 }
-
-/* --- Subcomponents --- */
 
 function Metric({ label, value }) {
   return (
