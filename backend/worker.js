@@ -3,6 +3,26 @@ const cron = require('node-cron');
 const Monitor = require('./models/Monitor');
 const StatusLog = require('./models/StatusLog');
 
+// ─── Send Telegram alert on status change ─────────────────────────────────────
+async function sendAlert(monitor, status) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return;
+
+  const emoji = status === 'down' ? '🔴' : '🟢';
+  const text = `${emoji} *${monitor.name}* is *${status.toUpperCase()}*\n\`${monitor.url}\``;
+
+  try {
+    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+      chat_id: chatId,
+      text,
+      parse_mode: 'Markdown',
+    });
+  } catch (err) {
+    console.error('[worker] Telegram alert failed:', err.message);
+  }
+}
+
 // ─── Ping a single monitor ────────────────────────────────────────────────────
 async function pingMonitor(monitor) {
   const start = Date.now();
@@ -53,7 +73,7 @@ async function pingMonitor(monitor) {
   // Alert on status flip
   if (previousStatus !== 'pending' && previousStatus !== status) {
     console.log(`⚠️  ALERT: "${monitor.name}" flipped ${previousStatus} → ${status}`);
-    // TODO Phase 9: sendAlert(monitor, status);
+    await sendAlert(monitor, status);
   }
 }
 

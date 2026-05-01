@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
@@ -14,8 +15,18 @@ const authRouter = require('./routes/auth');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const limiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max:30, // limit each IP to 30 requests per windowMs
+  message:{ error: 'Too many requests, slow down.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
 // ─── Trust proxy (must be first) ─────────────────────────────────────────────
 app.set('trust proxy', true);
+
+app.use('/api', limiter);
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
 app.use(cors({
