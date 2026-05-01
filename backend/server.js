@@ -1,10 +1,20 @@
 require('dotenv').config();
+
+const required = ['MONGO_URI', 'JWT_SECRET', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'];
+required.forEach((key) => {
+  if (!process.env[key]) {
+    console.error(`[server] Missing env var: ${key}`);
+    process.exit(1);
+  }
+});
+
 const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const helmet = require('helmet');
 
 const User = require('./models/User');
 const startWorker = require('./worker');
@@ -27,6 +37,9 @@ const limiter = rateLimit({
 app.set('trust proxy', 1);
 
 app.use('/api', limiter);
+
+// ─── Security headers ─────────────────────────────────────────────────────────
+app.use(helmet());
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
 app.use(cors({

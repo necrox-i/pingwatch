@@ -23,5 +23,6 @@ const monitorSchema = new mongoose.Schema(
 
 // Fast per-user queries
 monitorSchema.index({ userId: 1, createdAt: -1 });
+monitorSchema.index({ userId: 1, active: 1 });
 
 module.exports = mongoose.model('Monitor', monitorSchema);
