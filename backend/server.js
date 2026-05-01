@@ -24,7 +24,7 @@ const limiter = rateLimit({
 })
 
 // ─── Trust proxy (must be first) ─────────────────────────────────────────────
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 
 app.use('/api', limiter);
 
