@@ -33,24 +33,24 @@ const limiter = rateLimit({
   legacyHeaders: false,
 })
 
-// ─── Trust proxy (must be first) ─────────────────────────────────────────────
+//  Trust proxy
 app.set('trust proxy', 1);
 
 app.use('/api', limiter);
 
-// ─── Security headers ─────────────────────────────────────────────────────────
+//  Security headers 
 app.use(helmet());
 
-// ─── CORS ────────────────────────────────────────────────────────────────────
+//  CORS 
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true,
 }));
 
-// ─── Body parsing ─────────────────────────────────────────────────────────────
+//  Body parsing 
 app.use(express.json({ limit: '10kb' })); // reject oversized payloads
 
-// ─── Request timeout — drop hung requests after 15s ──────────────────────────
+//  Request timeout — drop hung requests after 15s 
 app.use((req, res, next) => {
   res.setTimeout(15000, () => {
     res.status(408).json({ error: 'Request timeout' });
@@ -58,7 +58,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ─── Passport Google OAuth ───────────────────────────────────────────────────
+//  Passport Google OAuth 
 passport.use(new GoogleStrategy(
   {
     clientID: process.env.GOOGLE_CLIENT_ID,
@@ -86,12 +86,12 @@ passport.use(new GoogleStrategy(
 
 app.use(passport.initialize());
 
-// ─── Routes ──────────────────────────────────────────────────────────────────
+//  Routes 
 app.use('/auth', authRouter);
 app.use('/api/monitors', monitorsRouter);
 app.use('/api/logs', logsRouter);
 
-// ─── Health check ─────────────────────────────────────────────────────────────
+//  Health check 
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -101,18 +101,18 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ─── 404 handler ─────────────────────────────────────────────────────────────
+//  404 handler 
 app.use((req, res) => {
   res.status(404).json({ error: `Route ${req.method} ${req.path} not found` });
 });
 
-// ─── Global error handler ─────────────────────────────────────────────────────
+//  Global error handler 
 app.use((err, req, res, next) => {
   console.error('[server] Unhandled error:', err.message);
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// ─── Graceful shutdown ────────────────────────────────────────────────────────
+//  Graceful shutdown 
 async function shutdown(signal) {
   console.log(`[server] ${signal} received — shutting down gracefully`);
   try {
@@ -129,7 +129,7 @@ async function shutdown(signal) {
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT',  () => shutdown('SIGINT'));
 
-// ─── Bootstrap ───────────────────────────────────────────────────────────────
+//  Bootstrap 
 mongoose
   .connect(process.env.MONGO_URI || 'mongodb://localhost:27017/pingwatch')
   .then(() => {

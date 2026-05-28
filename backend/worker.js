@@ -3,7 +3,7 @@ const cron = require('node-cron');
 const Monitor = require('./models/Monitor');
 const StatusLog = require('./models/StatusLog');
 
-// ─── Ping a single monitor ────────────────────────────────────────────────────
+//  Ping a single monitor 
 async function pingMonitor(monitor) {
   const start = Date.now();
   let status = 'down';
@@ -57,7 +57,7 @@ async function pingMonitor(monitor) {
   }
 }
 
-// ─── Run all due checks ───────────────────────────────────────────────────────
+//  Run all due checks 
 async function runChecks() {
   try {
     const monitors = await Monitor.find({ active: true });
@@ -98,7 +98,7 @@ async function runChecks() {
   }
 }
 
-// ─── Watch for new monitors → ping immediately ────────────────────────────────
+//  Watch for new monitors → ping immediately 
 function watchNewMonitors() {
   try {
     const changeStream = Monitor.watch(
@@ -131,7 +131,7 @@ function watchNewMonitors() {
   }
 }
 
-// ─── Self-ping to prevent Render cold start ───────────────────────────────────
+//  Self-ping to prevent Render cold start 
 function keepAlive() {
   const url = process.env.SERVER_URL;
   if (!url) {
@@ -149,7 +149,7 @@ function keepAlive() {
   console.log(`[worker] keepAlive active → ${url}/health every 10 min`);
 }
 
-// ─── Bootstrap ───────────────────────────────────────────────────────────────
+//  Bootstrap 
 module.exports = async function startWorker() {
   console.log('[worker] Starting...');
 

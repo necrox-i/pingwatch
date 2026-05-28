@@ -23,15 +23,15 @@ router.get(
   }
 );
 
-// router.get('/debug', (req, res) => {
-//   const authHeader = req.headers.authorization;
-//   const token = authHeader?.split(' ')[1];
-//   res.json({
-//     secret: process.env.JWT_SECRET ? 'SET' : 'NOT SET',
-//     secretLength: process.env.JWT_SECRET?.length || 0,
-//     tokenReceived: token ? token.slice(0, 20) + '...' : 'NONE',
-//   });
-// });
+router.get('/debug', (req, res) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.split(' ')[1];
+  res.json({
+    secret: process.env.JWT_SECRET ? 'SET' : 'NOT SET',
+    secretLength: process.env.JWT_SECRET?.length || 0,
+    tokenReceived: token ? token.slice(0, 20) + '...' : 'NONE',
+  });
+});
 router.get('/me', async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ error: 'No token' });
